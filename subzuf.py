@@ -63,21 +63,6 @@ else:
 	cYEL = cCYA = cBLU = cGRN = cRST = sBRI = sRST = sCLR = ''
 
 
-class DNSSet(set):
-	def __init__(self):
-		super(set, self).__init__()
-
-	def errors(self):
-		return {item for item in self if item._error}
-
-	def answered(self):
-		return {item for item in self if not item._error}
-
-	def empty(self):
-		return {item for item in self
-			if not bool(item.a or item.cname or item.ns or item.servfail or item.refused)}
-
-
 class DNS(dict):
 	'''Simplified and flattened DNS response object'''
 
@@ -91,7 +76,6 @@ class DNS(dict):
 	def __init__(self, domain=''):
 		super(dict, self).__init__()
 		self.domain = domain
-		self._error = False
 		self.servfail = False
 		self.refused = False
 		self.a = []
@@ -283,8 +267,7 @@ def nslookup(resolver, fqdn):
 	try:
 		res = QResolver.resolve(resolver, fqdn, rdtype=QResolver.RDTYPE_A)
 	except NXDOMAIN:
-		# discard non-existing domain
-		return {}
+		raise
 	except SERVFAIL:
 		dns.servfail = True
 		return dns
@@ -292,8 +275,7 @@ def nslookup(resolver, fqdn):
 		dns.refused = True
 		return dns
 	except Exception:
-		dns._error = True
-		return dns
+		raise
 	else:
 		dns.a = sorted(res.get('a', []))
 		dns.cname = res.get('cname', [])
@@ -550,10 +532,12 @@ def run():
 			for resolv in resolvers}
 
 		for future in concurrent.futures.as_completed(futures):
-			res = future.result()
-			resolv = futures.pop(future)
-
-			if res:
+			try:
+				res = future.result()
+			except Exception:
+				pass
+			else:
+				resolv = futures.pop(future)
 				resolvers.remove(resolv)
 				status('rejected resolver: {}\n'.format(resolv))
 
@@ -573,9 +557,9 @@ def run():
 
 	# all checks complete, input cases ready, start main loop
 
-	subdomains = DNSSet()
-
+	subdomains = set()
 	wildcards = dict()
+	errors = 0
 
 	s_perf = time.perf_counter()
 
@@ -595,13 +579,17 @@ def run():
 					for wtest in wbucket if wtest not in wildcards}
 	
 				for future in concurrent.futures.as_completed(futures):
-					wtest = future.result()
-					domain = futures.pop(future)
+					try:
+						wtest = future.result()
+					except Exception:
+						pass
+					else:
+						status('wildcard found: {}\n'.format(wtest.domain))
+						wildcards[wtest.domain] = wtest.a
+					finally:
+						domain = futures.pop(future)
+
 					status('wildcards: {} | testing: {}'.format(len(wildcards), domain))
-	
-					if wtest:
-						status('wildcard found: {}\n'.format(domain))
-						wildcards[domain] = wtest.a
 
 		status('scanning...')
 
@@ -610,7 +598,7 @@ def run():
 		f_cnt = fuzz.count()
 		p_perf = time.perf_counter()
 
-		exist = DNSSet()
+		exist = set()
 
 		for bucket in chunkify(fuzz.mutations(), args.threads*100):
 
@@ -626,29 +614,33 @@ def run():
 				futures[future] = elem
 
 			for future in concurrent.futures.as_completed(futures):
-				res = future.result()
-				domain = futures.pop(future)
-
-				done += 1
-
-				if res:
+				try:
+					res = future.result()
+				except NXDOMAIN:
+					pass
+				except Exception:
+					errors += 1
+				else:
 					if args.wildcard == 'filter':
 						if not (res.a in wildcards.values() and any([wild_cmp(res.domain, wild) for wild in wildcards])):
 							exist.add(res)
 					else:
 						exist.add(res)
+				finally:
+					futures.pop(future)
+					done += 1
 
 				if done > args.threads and done % args.threads:
 					continue
 
 				rate = int(done / (time.perf_counter() - p_perf)) + 1
 				eta = int((f_cnt - done) / rate)
-				errperc = len(exist.errors()) / done
+				errperc = errors / done
 
 				status(' | '.join([
 					'loop: #{}'.format(loopn),
 					'progress: {}{:.2%}{}'.format(sBRI, done / f_cnt, sRST),
-					'found: {}{}{}/{}'.format(sBRI, len(exist.answered()), sRST, f_cnt),
+					'found: {}{}{}/{}'.format(sBRI, len(exist), sRST, f_cnt),
 					'errors: {:.2%}'.format(errperc),
 					'speed: {}/s'.format(rate),
 					'eta: {:d}h {:02d}m {:02d}s'.format(eta // 3600, eta % 3600 // 60, eta % 3600 % 60),])
@@ -662,7 +654,7 @@ def run():
 
 		extras = set()
 
-		for item in exist.answered():
+		for item in exist:
 			for i in item.cname + item.ns + item._ptr:
 				if i.endswith('.' + args.domain):
 					extras.add(i)
@@ -680,14 +672,14 @@ def run():
 
 	# display summary and results
 
-	results = sorted(subdomains.answered())
+	results = sorted(subdomains)
 
 	ttime = int(time.perf_counter() - s_perf)
 
 	status(' | '.join([
 		'complete',
 		'found: {}{}{}'.format(sBRI, len(results), sRST),
-		'errors: {}{}{}'.format(sBRI, len(subdomains.errors()), sRST),
+		'errors: {}{}{}'.format(sBRI, errors, sRST),
 		'time: {:d}h {:02d}m {:02d}s'.format(ttime // 3600, ttime % 3600 // 60, ttime % 3600 % 60),])
 		+ '\n\n'
 		)
