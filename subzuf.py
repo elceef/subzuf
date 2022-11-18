@@ -638,13 +638,12 @@ def run():
 
 				rate = int(done / (time.perf_counter() - p_perf)) + 1
 				eta = int((f_cnt - done) / rate)
-				errperc = errors / done
 
 				status(' | '.join([
 					'loop: #{}'.format(loopn),
 					'progress: {}{:.2%}{}'.format(sBRI, done / f_cnt, sRST),
 					'found: {}{}{}/{}'.format(sBRI, len(exist), sRST, f_cnt),
-					'errors: {:.2%}'.format(errperc),
+					'errors: {} ({:.2%})'.format(errors, errors / done),
 					'speed: {}/s'.format(rate),
 					'eta: {:d}h {:02d}m {:02d}s'.format(eta // 3600, eta % 3600 // 60, eta % 3600 % 60),])
 					)
