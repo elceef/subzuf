@@ -543,6 +543,7 @@ def run():
 
 	if not resolvers:
 		fatal('all DNS resolvers have been rejected')
+	iresolver = itertools.cycle(resolvers)
 
 	# read input data
 
@@ -575,7 +576,7 @@ def run():
 		if args.wildcard in ('filter', 'reject'):
 
 			for wbucket in chunkify(fuzz.wildations(), args.threads*100):
-				futures = {executor.submit(nslookup, resolver=random.choice(resolvers), fqdn=wtest): wtest
+				futures = {executor.submit(nslookup, resolver=next(iresolver), fqdn=wtest): wtest
 					for wtest in wbucket if wtest not in wildcards}
 	
 				for future in concurrent.futures.as_completed(futures):
@@ -610,7 +611,7 @@ def run():
 						done += 1
 						continue
 
-				future = executor.submit(nslookup, resolver=random.choice(resolvers), fqdn=elem)
+				future = executor.submit(nslookup, resolver=next(iresolver), fqdn=elem)
 				futures[future] = elem
 
 			for future in concurrent.futures.as_completed(futures):
