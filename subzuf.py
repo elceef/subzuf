@@ -388,6 +388,8 @@ def chunkify(iterable, chunk=1000):
 
 def wild_cmp(a, b):
 	for x, y in itertools.zip_longest(a.split('.')[::-1], b.split('.')[::-1]):
+		if x == None or y == None:
+			return False
 		if x != y and x != '*' and y != '*':
 			return False
 	return True
