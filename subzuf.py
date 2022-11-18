@@ -37,7 +37,6 @@ import re
 import signal
 import time
 import socket
-import random
 import itertools
 import getopt
 import concurrent.futures
@@ -526,7 +525,7 @@ def run():
 			except UnicodeDecodeError:
 				fatal('unable to parse {}'.format(f.name))
 
-		randnx = 'subzuf-{:x}.com'.format(random.getrandbits(64))
+		randnx = 'subzuf-{:x}.com'.format(int.from_bytes(os.urandom(8), 'little'))
 
 		futures = {executor.submit(nslookup, resolver=resolv, fqdn=randnx): resolv
 			for resolv in resolvers}
