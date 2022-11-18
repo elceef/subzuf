@@ -533,12 +533,15 @@ def run():
 		for future in concurrent.futures.as_completed(futures):
 			try:
 				res = future.result()
+			except NXDOMAIN:
+				futures.pop(future)
+				continue
 			except Exception:
 				pass
-			else:
-				resolv = futures.pop(future)
-				resolvers.remove(resolv)
-				status('rejected resolver: {}\n'.format(resolv))
+
+			resolv = futures.pop(future)
+			resolvers.remove(resolv)
+			status('rejected resolver: {}\n'.format(resolv))
 
 	if not resolvers:
 		fatal('all DNS resolvers have been rejected')
