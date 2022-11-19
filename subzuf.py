@@ -529,7 +529,7 @@ def run():
 
 		randnx = 'subzuf-{:x}.com'.format(int.from_bytes(os.urandom(8), 'little'))
 
-		futures = {executor.submit(nslookup, resolver=resolv, fqdn=randnx): resolv
+		futures = {executor.submit(QResolver.resolve, resolver=resolv, fqdn=randnx, timeout=1): resolv
 			for resolv in resolvers}
 
 		for future in concurrent.futures.as_completed(futures):
