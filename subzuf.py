@@ -369,8 +369,8 @@ class Fuzzer():
 			yield '.'.join([sub, self.domain])
 
 	def wildations(self):
-		for wild in {'.'.join(['*'] + sub.split('.')[1:]) for sub in self.subdomains}:
-			yield '.'.join([wild, self.domain])
+		for wild in {'.'.join(['*'] + sub.split('.', 1)[1:]) for sub in self.subdomains}:
+			yield wild + '.' + self.domain
 
 	def count(self):
 		return len(self.subdomains)
@@ -386,13 +386,8 @@ def chunkify(iterable, chunk=1000):
             return
 
 
-def wild_cmp(a, b):
-	for x, y in itertools.zip_longest(a.split('.')[::-1], b.split('.')[::-1]):
-		if x == None or y == None:
-			return False
-		if x != y and x != '*' and y != '*':
-			return False
-	return True
+def to_wild(domain):
+	return '.'.join(['*', domain.partition('.')[2]])
 
 
 def status(message):
@@ -627,7 +622,7 @@ def run():
 					errors += 1
 				else:
 					if args.wildcard == 'filter':
-						if not (res.a in wildcards.values() and any([wild_cmp(res.domain, wild) for wild in wildcards])):
+						if wildcards.get(to_wild(res.domain)) != res.a:
 							exist.add(res)
 					else:
 						exist.add(res)
