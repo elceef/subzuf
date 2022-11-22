@@ -328,6 +328,8 @@ class Fuzzer():
 	def _fuzz(self, word):
 		swaps = self.swaps
 		words = list(filter(None, word.split('-')))
+		for i in range(1, len(words)):
+			yield '-'.join(words[:i])
 		for i, w in enumerate(words):
 			pre = words[:i]
 			suf = words[i+1:]
