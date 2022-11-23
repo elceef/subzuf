@@ -586,8 +586,9 @@ def run():
 					except Exception:
 						pass
 					else:
-						status('wildcard found: {}\n'.format(wtest.domain))
-						wildcards[wtest.domain] = wtest.a
+						if not (wtest.servfail or wtest.refused):
+							status('wildcard found: {}\n'.format(wtest.domain))
+							wildcards[wtest.domain] = wtest.a
 					finally:
 						domain = futures.pop(future)
 
