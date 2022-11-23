@@ -6,4 +6,4 @@ if [ ! $? -eq 0 ]; then
 	exit
 fi
 
-jq -r '["domain", "a", "cname"], (.[] | [.domain, .a[0], .cname[0]]) | @csv' < "${1:-/dev/stdin}"
+jq -r '["domain", "a", "cname", "servfail", "refused"], (.[] | [.domain, .a[0], .cname[-1], .servfail, .refused]) | @csv' < "${1:-/dev/stdin}"
