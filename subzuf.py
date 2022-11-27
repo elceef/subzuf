@@ -460,6 +460,8 @@ def run():
 					fatal('unable to open {} ({})'.format(val, err.strerror.lower()))
 
 		elif opt == '--output':
+			if os.path.exists(val):
+				fatal('{} already exists'.format(val))
 			try:
 				args.output = open(val, 'w', encoding='utf-8')
 			except OSError as err:
