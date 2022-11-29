@@ -5,25 +5,56 @@ subzuf
 effective DNS reponse-guided algorithm. It utilizes a provided set of input 
 data, like a tailored wordlist or historical DNS/TLS records, to accurately 
 synthesize more corresponding domain names and expand them even further in a 
-loop based on information gathered during DNS scan. This approach in most cases 
-allows to discover more subdomains with significantly reduced time and 
-resources.
+loop based on information gathered during DNS scan. This somewhat different 
+approach to subdomain enumeration in most cases allows to discover more 
+subdomains with significantly reduced time and resources.
 
 ![Demo](/misc/demo.gif)
 
 In short, *subzuf* can be summarized by the following:
 
-- Starting with input data and working in a loop, generates carefully selected 
-candidates and uncover completely new subdomains during DNS enumeration scans
+- Generates carefully selected candidates and uncover completely new subdomains 
+during DNS enumeration scans
 - Efficient multi-threaded DNS client capable of resolving thousands of domains 
 per second
 - Wildcard detection in two modes: filter (default, slightly slower but 
 accurate) and reject (resource-saving)
 - Accepts wordlist or domain names or a mix of both as input
-- Requires essentially no configuration or fine-tuning - at minimum needs only 
-target domain name and some quality input data
+- Requires essentially no configuration or fine-tuning
 - Works right of out the box - no external dependencies or bizzare requirements
 - Easily chainable with other tools
+
+
+Installation
+------------
+
+```
+$ git clone https://github.com/elceef/subzuf.git
+$ cd subzuf
+$ pip install .
+$ subzuf --help
+```
+
+*subzuf* itself is just a single file which has no external dependencies - you 
+can move it anywhere you need.
+
+
+Quick examples
+--------------
+
+Using the attached scripts, collect publicly available data related to the 
+target domain and provide it as input:
+
+```
+$ ./scripts/_subfind.sh example.com | subzuf example.com
+```
+
+Provide a text file as input, save JSON output to a file, and display results 
+in CSV format:
+
+```
+$ cat wordlist.txt | subzuf example.com | tee out.zuf | ./scripts/json2csv.sh
+```
 
 
 Usage tips
