@@ -135,10 +135,7 @@ class QResolver():
 
 	@staticmethod
 	def _build_query(fqdn, rdtype=RDTYPE_A):
-		j = lambda x: chr(len(x)) + x
-		l = fqdn.split('.')
-		qname = ''.join(map(j, l)).encode()
-
+		qname = b''.join([len(x).to_bytes(1, 'big') + x for x in fqdn.encode('idna').split(b'.')])
 		return b''.join([b'\x19\x86\x01\x00\x00\x01\x00\x00\x00\x00\x00\x01',
 			qname,
 			b'\x00',
@@ -166,7 +163,7 @@ class QResolver():
 				break
 			else:
 				label = data[i+1: i+1+b]
-				labels.append(label.decode())
+				labels.append(label.decode('idna'))
 				i += b
 
 			i += 1
@@ -185,12 +182,12 @@ class QResolver():
 		while True:
 			rl = reader.read(1)[0]
 			if rl:
-				rn.append(reader.read(rl).decode())
+				rn.append(reader.read(rl))
 			else:
 				reader.skip(4)
 				break
 
-		rname = '.'.join(rn)
+		rname = b'.'.join(rn).decode('idna')
 		if qname != rname:
 			raise DNSException('Inconsistent DNS query and response: {} <> {}'.format(qname, rname))
 
@@ -449,7 +446,7 @@ def run():
 
 	if not domain:
 		fatal('domain name is required')
-	args.domain = domain[0].encode('idna').decode()
+	args.domain = domain[0]
 
 	for opt, val in opts:
 		if opt == '--input':
