@@ -194,8 +194,12 @@ class QResolver():
 		flags = to_int(header[2:4])
 		rcode = flags & 0x0003
 
+		answer_rr = to_int(header[6:8])
+
 		if rcode == cls.RCODE_NXDOMAIN:
-			raise NXDOMAIN('Domain name does not exist: {}'.format(qname))
+			# ignore NXDOMAIN if answer is present
+			if answer_rr == 0:
+				raise NXDOMAIN('Domain name does not exist: {}'.format(qname))
 
 		elif rcode == cls.RCODE_SERVFAIL:
 			raise SERVFAIL('Server failed to complete request: {}'.format(qname))
@@ -214,8 +218,6 @@ class QResolver():
 			cls.RDTYPE_CNAME: 'cname',
 			cls.RDTYPE_PTR: 'ptr',
 			}
-
-		answer_rr = to_int(header[6:8])
 
 		for _ in range(answer_rr):
 			reader.skip(2)
@@ -361,7 +363,6 @@ class Fuzzer():
 					self._prep(item)
 			else:
 				self._prep(item)
-
 
 	def mutations(self):
 		for sub in self.subdomains:
