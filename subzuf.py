@@ -28,7 +28,7 @@ limitations under the License.
 
 __author__ = 'Marcin Ulikowski'
 __email__ = 'marcin@ulikowski.pl'
-__version__ = '2022.11.0'
+__version__ = '2022.12.0'
 
 
 import sys
