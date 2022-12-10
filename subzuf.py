@@ -624,7 +624,7 @@ def run():
 				except Exception:
 					errors += 1
 				else:
-					if args.wildcard == 'filter':
+					if args.wildcard == 'filter' and not (res.servfail or res.refused):
 						if wildcards.get(to_wild(res.domain)) != res.a:
 							exist.add(res)
 					else:
