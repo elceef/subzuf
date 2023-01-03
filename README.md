@@ -1,7 +1,7 @@
 subzuf
 ======
 
-*subzuf* is a subdomain brute-force fuzzer coupled with an immensly simple but 
+*subzuf* is a smart subdomain fuzzer coupled with an immensly simple but 
 effective DNS reponse-guided algorithm. It utilizes a provided set of input 
 data, like a tailored wordlist or historical DNS/TLS records, to accurately 
 synthesize more corresponding domain names and expand them even further in a 
@@ -72,7 +72,7 @@ not increase linearly with the number of threads.
 low, say less than 1%. The most common errors are socket timeouts due to: 
 congested and poor quality network links, slow DNS resolvers, rate-limiting, 
 overloaded authoritative nameservers.
-- Cloudflare, Google and OpenDNS public DNS resolvers are used by default and 
+- Cloudflare and Google public DNS resolvers are used by default and 
 considered reliable. Feel free to supply your own list of DNS resolvers. 
 Although resolvers undergo basic validation test, please ensure that they can 
 handle higher loads. Poor quality DNS resolvers will cause excessive timeout 
